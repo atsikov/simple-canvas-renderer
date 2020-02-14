@@ -1,10 +1,12 @@
 import { Drawable } from "./Drawable";
+import { ImagesCache } from "./ImagesCache";
 
 export class CanvasRenderer {
     private canvas: HTMLCanvasElement;
     private context: CanvasRenderingContext2D;
     private drawables: Drawable[] = [];
     private renderAnimationFrame: number | undefined;
+    private cache = new ImagesCache();
 
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
@@ -45,15 +47,19 @@ export class CanvasRenderer {
 
         context.clearRect(0, 0, context.canvas.width, context.canvas.height);
 
+        context.imageSmoothingEnabled = true;
+
         this.drawables.forEach(drawable => {
             context.save();
+
+            const cachedImage = this.cache.getCachedImage(drawable.image);
 
             if (context.globalAlpha !== drawable.alpha) {
                 context.globalAlpha = drawable.alpha;
             }
 
-            const width = drawable.image.width as number;
-            const height = drawable.image.height as number;
+            const width = cachedImage.width;
+            const height = cachedImage.height;
 
             context.translate(drawable.x + width / 2, drawable.y + height/ 2);
             if (drawable.rotation !== 0) {
@@ -63,7 +69,7 @@ export class CanvasRenderer {
                 context.scale(drawable.scaleX, drawable.scaleY);
             }
             context.drawImage(
-                drawable.image,
+                cachedImage,
                 -width / 2,
                 -height / 2,
                 width,
